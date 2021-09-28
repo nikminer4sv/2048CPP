@@ -14,9 +14,9 @@ using namespace sf;
 
 enum Direction {
 
-    TOP,
+    UP,
     RIGHT,
-    BOTTOM,
+    DOWN,
     LEFT
 
 };
@@ -136,6 +136,16 @@ public:
                 ValueLabel.move(-(Size + Config["BORDERS"]), 0);
                 break;
 
+            case UP:
+                CellBackground.move(0, -(Size + Config["BORDERS"]));
+                ValueLabel.move(0, -(Size + Config["BORDERS"]));
+                break;
+
+            case DOWN:
+                CellBackground.move(0, Size + Config["BORDERS"]);
+                ValueLabel.move(0, Size + Config["BORDERS"]);
+                break;
+
         }
 
     }
@@ -144,8 +154,11 @@ public:
 
 void CreateCell(Vector2f GridPosition, int Value, vector<vector<Cell>> *Field, map<string, int> *Config);
 void CreateCellInRandomPlace(vector<vector<Cell>> *Field, map<string, int> &Config);
-void MergeRow(vector<vector<Cell>> *Field, map<string, int> Config, Direction MergeDirection);
+void MergeRow(vector<vector<Cell>> *Field, map<string, int> &Config, Direction MergeDirection);
 void MergeRight(vector<vector<Cell>> *Field, map<string, int> &Config);
+void MergeLeft(vector<vector<Cell>> *Field, map<string, int> &Config);
+void MergeUp(vector<vector<Cell>> *Field, map<string, int> &Config);
+void MergeDown(vector<vector<Cell>> *Field, map<string, int> &Config);
 
 int main() {
 
@@ -194,7 +207,7 @@ int main() {
                 CreateCellInRandomPlace(&Field, Config);
             }
 
-            if (event.type == Event::KeyPressed && event.key.code == Keyboard::Up) {
+            if (event.type == Event::KeyPressed && event.key.code == Keyboard::Z) {
                 for (int i = 0; i < 5; i++) {
                         for (int j = 0; j < 5; j++)
                             cout << Field[i][j].IsEmptyCell();
@@ -202,9 +215,19 @@ int main() {
                     }
             }
 
-            if (event.type == Event::KeyPressed && event.key.code == Keyboard::Right) {
+            if (event.type == Event::KeyPressed && event.key.code == Keyboard::Right)
                 MergeRow(&Field, Config, Direction::RIGHT);
-            }
+            
+
+            if (event.type == Event::KeyPressed && event.key.code == Keyboard::Left) 
+                MergeRow(&Field, Config, Direction::LEFT);
+
+            if (event.type == Event::KeyPressed && event.key.code == Keyboard::Up) 
+                MergeRow(&Field, Config, Direction::UP);
+
+            if (event.type == Event::KeyPressed && event.key.code == Keyboard::Down) 
+                MergeRow(&Field, Config, Direction::DOWN);            
+
 
         }
 
@@ -344,12 +367,24 @@ int GetCellRandomValue() {
 
 }
 
-void MergeRow(vector<vector<Cell>> *Field, map<string, int> Config, Direction MergeDirection) {
+void MergeRow(vector<vector<Cell>> *Field, map<string, int> &Config, Direction MergeDirection) {
 
     switch (MergeDirection) {
 
         case RIGHT:
             MergeRight(Field, Config);
+            break;
+
+        case LEFT:
+            MergeLeft(Field, Config);
+            break;
+
+        case UP:
+            MergeUp(Field, Config);
+            break;
+
+        case DOWN:
+            MergeDown(Field, Config);
             break;
 
     }
@@ -375,31 +410,187 @@ void MergeRight(vector<vector<Cell>> *Field, map<string, int> &Config) {
 
         if (!IsEmptyRow) {
 
-            for (int j = Config["COLS"] - 1; j > 0; j--) {
+            for (int temp = 0; temp < Config["COLS"]; temp++) {
 
-                if (Field->at(i)[j].IsEmptyCell() && !Field->at(i)[j - 1].IsEmptyCell()) {
+                for (int j = Config["COLS"] - 1; j > 0; j--) {
 
-                    Field->at(i)[j].Move(Direction::LEFT);
-                    Field->at(i)[j - 1].Move(Direction::RIGHT);
+                    if (Field->at(i)[j].IsEmptyCell() && !Field->at(i)[j - 1].IsEmptyCell()) {
 
-                    Cell TempCell = Field->at(i)[j];
-                    Field->at(i)[j] = Field->at(i)[j - 1];
-                    Field->at(i)[j - 1] = TempCell;
+                        Field->at(i)[j].Move(Direction::LEFT);
+                        Field->at(i)[j - 1].Move(Direction::RIGHT);
 
-                    WasMerged = true;
+                        Cell TempCell = Field->at(i)[j];
+                        Field->at(i)[j] = Field->at(i)[j - 1];
+                        Field->at(i)[j - 1] = TempCell;
 
-                    cout << endl;
+                        WasMerged = true;
+
+                        cout << endl;
+
+                    }
 
                 }
 
             }
 
+        }
+
+    }
+
+    //if (WasMerged)
+        //CreateCellInRandomPlace(Field, Config);
+
+}
+
+void MergeLeft(vector<vector<Cell>> *Field, map<string, int> &Config) {
+
+    bool WasMerged = false;
+
+    for (int i = 0; i < Config["ROWS"]; i++) {
+
+        bool IsEmptyRow = true;
+
+        for (int f = 0; f < Config["COLS"]; f++) {
+
+            if (!Field->at(i)[f].IsEmptyCell()) {
+                IsEmptyRow = false;
+                break;
+            }
+
+        }
+
+        if (!IsEmptyRow) {
+
+            for (int temp = 0; temp < Config["COLS"]; temp++) {
+
+                for (int j = 0; j < Config["COLS"] - 1; j++) {
+
+                    if (Field->at(i)[j].IsEmptyCell() && !Field->at(i)[j + 1].IsEmptyCell()) {
+
+                        Field->at(i)[j].Move(Direction::RIGHT);
+                        Field->at(i)[j + 1].Move(Direction::LEFT);
+
+                        Cell TempCell = Field->at(i)[j];
+                        Field->at(i)[j] = Field->at(i)[j + 1];
+                        Field->at(i)[j + 1] = TempCell;
+
+                        WasMerged = true;
+
+                        cout << endl;
+
+                    }
+
+                }
+
+            }
 
         }
 
     }
 
-    if (WasMerged)
-            CreateCellInRandomPlace(Field, Config);
+    //if (WasMerged)
+        //CreateCellInRandomPlace(Field, Config);
+
+}
+
+void MergeUp(vector<vector<Cell>> *Field, map<string, int> &Config) {
+
+    bool WasMerged = false;
+
+    for (int i = 0; i < Config["COLS"]; i++) {
+
+        bool IsEmptyRow = true;
+
+        for (int f = 0; f < Config["ROWS"]; f++) {
+
+            if (!Field->at(f)[i].IsEmptyCell()) {
+                IsEmptyRow = false;
+                break;
+            }
+
+        }
+
+        if (!IsEmptyRow) {
+
+            for (int temp = 0; temp < Config["ROWS"]; temp++) {
+
+                for (int j = 0; j < Config["ROWS"] - 1; j++) {
+
+                    if (Field->at(j)[i].IsEmptyCell() && !Field->at(j + 1)[i].IsEmptyCell()) {
+
+                        Field->at(j)[i].Move(Direction::DOWN);
+                        Field->at(j + 1)[i].Move(Direction::UP);
+
+                        Cell TempCell = Field->at(j)[i];
+                        Field->at(j)[i] = Field->at(j + 1)[i];
+                        Field->at(j + 1)[i] = TempCell;
+
+                        WasMerged = true;
+
+                        cout << endl;
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    //if (WasMerged)
+        //CreateCellInRandomPlace(Field, Config);
+
+}
+
+void MergeDown(vector<vector<Cell>> *Field, map<string, int> &Config) {
+
+    bool WasMerged = false;
+
+    for (int i = 0; i < Config["COLS"]; i++) {
+
+        bool IsEmptyRow = true;
+
+        for (int f = 0; f < Config["ROWS"]; f++) {
+
+            if (!Field->at(f)[i].IsEmptyCell()) {
+                IsEmptyRow = false;
+                break;
+            }
+
+        }
+
+        if (!IsEmptyRow) {
+
+            for (int temp = 0; temp < Config["ROWS"]; temp++) {
+
+                for (int j = Config["ROWS"] - 1; j > 0; j--) {
+
+                    if (Field->at(j)[i].IsEmptyCell() && !Field->at(j - 1)[i].IsEmptyCell()) {
+
+                        Field->at(j)[i].Move(Direction::UP);
+                        Field->at(j - 1)[i].Move(Direction::DOWN);
+
+                        Cell TempCell = Field->at(j)[i];
+                        Field->at(j)[i] = Field->at(j - 1)[i];
+                        Field->at(j - 1)[i] = TempCell;
+
+                        WasMerged = true;
+
+                        cout << endl;
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    //if (WasMerged)
+        //CreateCellInRandomPlace(Field, Config);
 
 }
